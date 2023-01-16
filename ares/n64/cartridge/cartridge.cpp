@@ -6,6 +6,7 @@ Cartridge& cartridge = cartridgeSlot.cartridge;
 #include "slot.cpp"
 #include "flash.cpp"
 #include "isviewer.cpp"
+#include "ci.cpp"
 #include "debugger.cpp"
 #include "serialization.cpp"
 
@@ -22,7 +23,7 @@ auto Cartridge::connect() -> void {
   information.cic    = pak->attribute("cic");
 
   if(auto fp = pak->read("program.rom")) {
-    rom.allocate(fp->size());
+    rom.allocate(max(64_MiB, fp->size()));  //SDRAM must be at least 64 MiB
     rom.load(fp);
   } else {
     rom.allocate(16);
@@ -45,6 +46,8 @@ auto Cartridge::connect() -> void {
 
   isviewer.ram.allocate(64_KiB);
 
+  ci.buffer.allocate(512);
+
   debugger.load(node);
 
   power(false);
@@ -59,6 +62,7 @@ auto Cartridge::disconnect() -> void {
   eeprom.reset();
   flash.reset();
   isviewer.ram.reset();
+  ci.buffer.reset();
   pak.reset();
   node.reset();
 }
@@ -85,6 +89,12 @@ auto Cartridge::power(bool reset) -> void {
   flash.source = 0;
   flash.offset = 0;
   isviewer.ram.fill(0);
+  ci.buffer.fill(0);
+  ci.status = 0;
+  ci.lba = 0;
+  ci.length = 0;
+  ci.byteswap = 0;
+  ci.cartrom = 1;
 }
 
 }

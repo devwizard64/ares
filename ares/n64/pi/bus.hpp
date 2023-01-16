@@ -46,6 +46,9 @@ inline auto PI::busRead(u32 address) -> u32 {
     return unmapped;
   }
   if(address <= 0x13ff'ffff) return cartridge.isviewer.read<Size>(address);
+  if(address <= 0x17ff'ffff) return unmapped;
+  if(address <= 0x1800'01ff) return cartridge.ci.buffer.read<Size>(address);
+  if(address <= 0x1800'ffff) return cartridge.ci.read<Size>(address);
   if(address <= 0x7fff'ffff) return unmapped;
   return unmapped; //accesses here actually lock out the RCP
 }
@@ -92,12 +95,21 @@ inline auto PI::busWrite(u32 address, u32 data) -> void {
     return;
   }
   if(address <= 0x13fe'ffff) {
-    if(cartridge.rom  ) return cartridge.rom.write<Size>(address, data);
+    if(!cartridge.ci.cartrom) {
+      if(cartridge.rom  ) return cartridge.rom.write<Size>(address, data);
+    }
     return;
   }
   if(address <= 0x13ff'ffff) {
     writeForceFinish(); //Debugging channel for homebrew, be gentle
     return cartridge.isviewer.write<Size>(address, data);
+  }
+  if(address <= 0x17ff'ffff) return;
+  if(address <= 0x1800'01ff) {
+    return cartridge.ci.buffer.write<Size>(address, data);
+  }
+  if(address <= 0x1800'ffff) {
+    return cartridge.ci.write<Size>(address, data);
   }
   if(address <= 0x7fff'ffff) return;
 }

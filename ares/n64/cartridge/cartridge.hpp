@@ -1,7 +1,7 @@
 struct Cartridge {
   Node::Peripheral node;
   VFS::Pak pak;
-  Memory::Readable16 rom;
+  Memory::Writable16 rom;  //must be serialized!
   Memory::Writable16 ram;
   Memory::Writable16 eeprom;
   struct Flash : Memory::Writable {
@@ -45,6 +45,19 @@ struct Cartridge {
     auto readWord(u32 address) -> u32;
     auto writeWord(u32 address, u32 data) -> void;
   } isviewer;
+  struct CI : Memory::IO<CI> {
+    //must be serialized!
+    Memory::Writable16 buffer;
+    u16 status;
+    u32 lba;
+    u32 length;
+    u8 byteswap;
+    u8 cartrom;
+    auto readCard(Memory::Writable16 buf, u32 address, u32 len, u8 swap) -> void;
+    auto writeCard(Memory::Writable16 buf, u32 address, u32 len) -> void;
+    auto readWord(u32 address) -> u32;
+    auto writeWord(u32 address, u32 data) -> void;
+  } ci;
 
   struct Debugger {
     //debugger.cpp
